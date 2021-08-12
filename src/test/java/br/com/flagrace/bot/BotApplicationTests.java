@@ -1,4 +1,4 @@
-package br.com.flagrace.Bot;
+package br.com.flagrace.bot;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
