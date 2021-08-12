@@ -1,7 +1,9 @@
 package br.com.flagrace.bot.events;
 
+import br.com.flagrace.bot.enumeration.BotEnum;
 import br.com.flagrace.bot.model.Image;
 import br.com.flagrace.bot.service.ImageService;
+import lombok.SneakyThrows;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
@@ -11,7 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.naming.directory.InvalidAttributesException;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -46,6 +51,7 @@ public class Events extends ListenerAdapter {
         }
     }
 
+    @SneakyThrows
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if(event.getMessage().getAuthor().isBot()) return;
@@ -70,19 +76,29 @@ public class Events extends ListenerAdapter {
             Image image = new Image();
             imageService.create(image);
 
-            imageAtt.downloadToFile(new File(image.getId().toString() + "." + imageAtt.getFileExtension()))
+            String fileExt = Objects.requireNonNull(imageAtt.getFileExtension());
+
+            String fileName = image.getId().toString().concat(".").concat(fileExt);
+
+            imageAtt.downloadToFile(new File(Paths.get(BotEnum.PATH.getValue(), fileName).toString()))
                     .thenAccept(file -> {
                         System.out.println("Saved attachment to " + file.getName());
 
-                        image.setFileName(file.getName());
+                        image.setOriginalFileName(file.getName());
                         imageService.update(image);
 
-                        //TODO
-                        // Process Flag Race
-                        // Delete Image
+                        // Double imageCompatibility = getImageCompatibility(image)
+
+                        // if(imageCompatibility > Threshold) {
+                        //     // TODO Ocr Detection and value check
+                        //     // TODO Main logic will be here probably the creation of new classes will be necessary.
+                        // }
+                        // else {
+                        //     // TODO ask if the person is sure the image is valid -> set a 1 min timer if no response failed
+                        //     // TODO if positive responde ask a junir to check (Leon...)
+                        //     // TODO if negative delete the image and continue
                     })
                     .exceptionally(t -> { // handle failure
-
                         //TODO delete image if created successfully
 
                         t.printStackTrace();

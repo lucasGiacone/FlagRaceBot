@@ -15,6 +15,7 @@ public class Image {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    private String fileName;
+    private String originalFileName;
+    private String extractedFileName;
     private Boolean isDeleted = false;
 }
