@@ -4,18 +4,24 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "images")
-public class Image {
+@Table(name = "flagraceevent")
+public class FlagRaceEvent {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    private String originalFileName;
-    private String extractedFileName;
+    private String fileName;
     private Boolean isDeleted = false;
+    private LocalDateTime date;
+    private int points;
+
+    @OneToOne
+    @JoinColumn(name = "playerId")
+    private Client player;
 }

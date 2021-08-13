@@ -1,22 +1,23 @@
 package br.com.flagrace.bot.events;
 
-import br.com.flagrace.bot.enumeration.BotEnum;
-import br.com.flagrace.bot.model.Image;
-import br.com.flagrace.bot.service.ImageService;
+import br.com.flagrace.bot.model.Client;
+import br.com.flagrace.bot.model.FlagRaceEvent;
+import br.com.flagrace.bot.ocr.OCR;
+import br.com.flagrace.bot.opencv.OpenCV;
+import br.com.flagrace.bot.service.ClientService;
+import br.com.flagrace.bot.service.FlagRaceService;
 import lombok.SneakyThrows;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.json.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.naming.directory.InvalidAttributesException;
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -24,10 +25,14 @@ import java.util.Objects;
 
 @Component
 public class Events extends ListenerAdapter {
-
+    @Autowired
+    FlagRaceService flagRaceService;
 
     @Autowired
-    ImageService imageService;
+    ClientService clientService;
+
+    @Autowired
+    OpenCV openCV;
 
     @Override
     public void onReady(@NotNull ReadyEvent event) {
@@ -46,7 +51,7 @@ public class Events extends ListenerAdapter {
                                 event.getHook().editOriginalFormat("Pong: %d ms", System.currentTimeMillis() - time) // then edit original
                         ).queue(); // Queue both reply and edit
             }
-            case "say" -> event.reply(Objects.requireNonNull(event.getOption("conteúdo")).getAsString()) // reply or acknowledge
+            case "say" -> event.reply(Objects.requireNonNull(event.getOption("content")).getAsString()) // reply or acknowledge
                     .queue(); // Queue both reply and edit
         }
     }
@@ -59,54 +64,41 @@ public class Events extends ListenerAdapter {
         List<Message.Attachment> attachments = event.getMessage().getAttachments();
         if ( attachments.size() == 0 ){
             System.out.println("TextOnly");
-
-//            String[] args = event.getMessage().getContentRaw().split(" ");
-//            String firstWord = args[0].substring(1);
-//
-//            if(args[0].startsWith(BotEnum.PREFIX.getValue())){
-//
-//                if(firstWord.equalsIgnoreCase("test")){
-//                    System.out.println("TEST");
-//                }
-//            }
-
         }
         else if( attachments.size() == 1 && attachments.get(0).isImage()){
-            Message.Attachment imageAtt = attachments.get(0);
-            Image image = new Image();
-            imageService.create(image);
+            FlagRaceEvent flagRaceEvent = new FlagRaceEvent();
 
-            String fileExt = Objects.requireNonNull(imageAtt.getFileExtension());
+            User author = event.getMessage().getAuthor();
+            Message.Attachment image = attachments.get(0);
+            Client player = this.clientService.findOrCreateByAuthor(author);
+            String base64Img = openCV.getPontuationImage(image, player, flagRaceEvent);
 
-            String fileName = image.getId().toString().concat(".").concat(fileExt);
-
-            imageAtt.downloadToFile(new File(Paths.get(BotEnum.PATH.getValue(), fileName).toString()))
-                    .thenAccept(file -> {
-                        System.out.println("Saved attachment to " + file.getName());
-
-                        image.setOriginalFileName(file.getName());
-                        imageService.update(image);
-
-                        // Double imageCompatibility = getImageCompatibility(image)
-
-                        // if(imageCompatibility > Threshold) {
-                        //     // TODO Ocr Detection and value check
-                        //     // TODO Main logic will be here probably the creation of new classes will be necessary.
-                        // }
-                        // else {
-                        //     // TODO ask if the person is sure the image is valid -> set a 1 min timer if no response failed
-                        //     // TODO if positive responde ask a junir to check (Leon...)
-                        //     // TODO if negative delete the image and continue
-                    })
-                    .exceptionally(t -> { // handle failure
-                        //TODO delete image if created successfully
-
-                        t.printStackTrace();
-                        return null;
-                    });
+            if (base64Img.equals("")){
+                // TODO Something failed implement it later
+                return;
+            }
 
 
-            System.out.println("Image");
+            String response = OCR.sendPost("data:image/png;base64,".concat(base64Img));
+            JSONObject object = new JSONObject(response);
+
+            if(object.getInt("OCRExitCode") != 1){
+                //FAILED CALL AN ADMIN
+                return;
+            }
+            JSONArray lines  = object.getJSONArray("ParsedResults").getJSONObject(0).getJSONObject("TextOverlay").getJSONArray("Lines");
+            String points = lines.getJSONObject(lines.length()-1).getString("LineText");
+
+            try{
+                flagRaceEvent.setPoints(Integer.parseInt(points));
+                flagRaceService.update(flagRaceEvent);
+            }
+            catch (Exception e){
+                //OCR FAILED PARSING WE SCREWED
+            }
+
+            System.out.println(points);
+
         }
     }
 }

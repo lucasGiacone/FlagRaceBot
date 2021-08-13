@@ -1,5 +1,6 @@
 package br.com.flagrace.bot.configuration;
 
+import org.opencv.core.Core;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -14,6 +15,7 @@ public class FlagRaceApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(FlagRaceApplication.class, args);
+		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 	}
 
 }

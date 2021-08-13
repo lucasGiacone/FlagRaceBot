@@ -4,9 +4,10 @@ import java.nio.file.Paths;
 
 public enum BotEnum {
 
-    PREFIX("$"),
     TOKEN(System.getenv("TOKEN")),
-    PATH(Paths.get(".","temp").toString());
+    PATH(Paths.get(".","temp").toString()),
+    TEMPLATEIMGNAME("needle.png"),
+    APIKEY(System.getenv("APIKEY"));
 
 
     private String value;
