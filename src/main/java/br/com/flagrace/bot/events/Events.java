@@ -1,5 +1,6 @@
 package br.com.flagrace.bot.events;
 
+import br.com.flagrace.bot.commands.FlagRaceImageRecievedCommand;
 import br.com.flagrace.bot.model.Client;
 import br.com.flagrace.bot.model.FlagRaceEvent;
 import br.com.flagrace.bot.ocr.OCR;
@@ -7,6 +8,7 @@ import br.com.flagrace.bot.opencv.OpenCV;
 import br.com.flagrace.bot.service.ClientService;
 import br.com.flagrace.bot.service.FlagRaceService;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.ReadyEvent;
@@ -24,7 +26,11 @@ import java.util.List;
 import java.util.Objects;
 
 @Component
+@Slf4j
 public class Events extends ListenerAdapter {
+    @Autowired
+    private FlagRaceImageRecievedCommand flagRaceImageRecievedCommand;
+
     @Autowired
     FlagRaceService flagRaceService;
 
@@ -66,39 +72,8 @@ public class Events extends ListenerAdapter {
             System.out.println("TextOnly");
         }
         else if( attachments.size() == 1 && attachments.get(0).isImage()){
-            FlagRaceEvent flagRaceEvent = new FlagRaceEvent();
-
-            User author = event.getMessage().getAuthor();
-            Message.Attachment image = attachments.get(0);
-            Client player = this.clientService.findOrCreateByAuthor(author);
-            String base64Img = openCV.getPontuationImage(image, player, flagRaceEvent);
-
-            if (base64Img.equals("")){
-                // TODO Something failed implement it later
-                return;
-            }
-
-
-            String response = OCR.sendPost("data:image/png;base64,".concat(base64Img));
-            JSONObject object = new JSONObject(response);
-
-            if(object.getInt("OCRExitCode") != 1){
-                //FAILED CALL AN ADMIN
-                return;
-            }
-            JSONArray lines  = object.getJSONArray("ParsedResults").getJSONObject(0).getJSONObject("TextOverlay").getJSONArray("Lines");
-            String points = lines.getJSONObject(lines.length()-1).getString("LineText");
-
-            try{
-                flagRaceEvent.setPoints(Integer.parseInt(points));
-                flagRaceService.update(flagRaceEvent);
-            }
-            catch (Exception e){
-                //OCR FAILED PARSING WE SCREWED
-            }
-
-            System.out.println(points);
-
+            this.flagRaceImageRecievedCommand.execute(event);
+            return;
         }
     }
 }
