@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import java.util.ArrayList;
 import java.util.List;
 
+//Hello
 public abstract class Embeds {
 
     String title;
