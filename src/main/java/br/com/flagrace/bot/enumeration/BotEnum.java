@@ -9,6 +9,7 @@ public enum BotEnum {
     TEMPLATEIMGNAME("needle.png"),
     RED(0x7f2927),
     GREEN(0x80b461),
+    YELLOW(0xd0a843),
     BLACK(0x1FFFFFFF),
     APIKEY(System.getenv("APIKEY"));
 

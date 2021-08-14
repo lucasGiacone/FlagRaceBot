@@ -18,14 +18,18 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.lang.*;
 
 import static org.opencv.imgcodecs.Imgcodecs.imread;
-import static org.opencv.imgproc.Imgproc.TM_SQDIFF_NORMED;
+import static org.opencv.imgcodecs.Imgcodecs.imwrite;
+import static org.opencv.imgproc.Imgproc.*;
 
 @Component
 public class OpenCV {
@@ -42,9 +46,11 @@ public class OpenCV {
         File recievedImage = getFlagRaceImageFile(image, flagRaceEvent);
         Mat incomingMatImage = imread(recievedImage.getPath());
 
+
+
         // TODO Proper deletion logic
 
-        return getMatchingImage(incomingMatImage, template);
+        return getMatchingImage(incomingMatImage, template, recievedImage.getName());
     }
 
     @SneakyThrows
@@ -84,7 +90,11 @@ public class OpenCV {
     }
 
     @SneakyThrows
-    private static String getMatchingImage(Mat img, Mat template){
+    private static String getMatchingImage(Mat img, Mat template, String filename){
+        Path fileToDeletePath = Paths.get("error.png");
+        Files.deleteIfExists(fileToDeletePath);
+
+
         //Create result image properties
         Mat result = new Mat();
         int result_cols = img.cols() - template.cols() + 1;
@@ -96,8 +106,13 @@ public class OpenCV {
         Core.normalize(result, result, 0, 1, Core.NORM_MINMAX, -1, new Mat());
         Core.MinMaxLocResult mmr = Core.minMaxLoc(result);
 
+
+
         // Returns empty string if not confident enough
-        if(mmr.maxVal < 0.8) return "";
+        System.out.println(mmr.minVal);
+
+        if(Math.abs(mmr.minVal) > 1E-9 && mmr.minVal != 0) return "";
+        System.out.println("iamHERE");
 
         Point matchLoc = mmr.minLoc;
         Rect rectCrop = new Rect( (int) matchLoc.x, (int) matchLoc.y,template.cols(),template.rows());
@@ -106,9 +121,9 @@ public class OpenCV {
         BufferedImage bufferedROI = resize(mat2BufferedImage(imgROI), 3);
 
         final ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-
         ImageIO.write(bufferedROI, "png", os);
+
+        imwrite(filename +".png",imgROI);
 
         return Base64.getEncoder().encodeToString(os.toByteArray());
     }
