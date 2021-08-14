@@ -11,8 +11,8 @@
 	<groupId>br.com.bbc</groupId>
 	<artifactId>banco</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>banco-bunda-do-charlao</name>
-	<description>Projeto do Banco Bunda do Charlão</description>
+	<name>flag-race-bot</name>
+	<description>Flag race bot project</description>
 	<properties>
 		<java.version>11</java.version>
 	</properties>
