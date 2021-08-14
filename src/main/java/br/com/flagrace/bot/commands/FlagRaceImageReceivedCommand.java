@@ -61,11 +61,10 @@ public class FlagRaceImageRecievedCommand {
         JSONObject object = new JSONObject(response);
 
         if(object.getInt("OCRExitCode") != 1){
-            // TODO
-            //  THE THIRD PARTY OCR SERVICE FAILED TO PROCESS
-            //  ASK THE PERSON IF THEY WANT A JUNIOR TO CHECK
-            //  ERROR EMBED!!
-            return null;
+            ErrorEmbed embed = new ErrorEmbed(author, "Text recognition failed");
+            String text = "• Ask a junior to manually verify your image(X button)";
+            embed.addField("Your image failed to process you can try:",text);
+            return embed;
         }
         JSONArray lines  = object.getJSONArray("ParsedResults").getJSONObject(0).getJSONObject("TextOverlay").getJSONArray("Lines");
         String points = lines.getJSONObject(lines.length()-1).getString("LineText");
