@@ -91,10 +91,6 @@ public class OpenCV {
 
     @SneakyThrows
     private static String getMatchingImage(Mat img, Mat template, String filename){
-        Path fileToDeletePath = Paths.get("error.png");
-        Files.deleteIfExists(fileToDeletePath);
-
-
         //Create result image properties
         Mat result = new Mat();
         int result_cols = img.cols() - template.cols() + 1;
@@ -106,13 +102,9 @@ public class OpenCV {
         Core.normalize(result, result, 0, 1, Core.NORM_MINMAX, -1, new Mat());
         Core.MinMaxLocResult mmr = Core.minMaxLoc(result);
 
-
-
         // Returns empty string if not confident enough
-        System.out.println(mmr.minVal);
-
         if(Math.abs(mmr.minVal) > 1E-9 && mmr.minVal != 0) return "";
-        System.out.println("iamHERE");
+
 
         Point matchLoc = mmr.minLoc;
         Rect rectCrop = new Rect( (int) matchLoc.x, (int) matchLoc.y,template.cols(),template.rows());
@@ -122,8 +114,6 @@ public class OpenCV {
 
         final ByteArrayOutputStream os = new ByteArrayOutputStream();
         ImageIO.write(bufferedROI, "png", os);
-
-        imwrite(filename +".png",imgROI);
 
         return Base64.getEncoder().encodeToString(os.toByteArray());
     }

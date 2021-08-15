@@ -1,13 +1,13 @@
 package br.com.flagrace.bot.events;
 
+import br.com.flagrace.bot.commands.DismissCommand;
 import br.com.flagrace.bot.commands.FlagRaceImageReceivedCommand;
-import br.com.flagrace.bot.opencv.OpenCV;
-import br.com.flagrace.bot.service.ClientService;
-import br.com.flagrace.bot.service.FlagRaceService;
+import br.com.flagrace.bot.commands.RetryCommand;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.ReadyEvent;
+import net.dv8tion.jda.api.events.interaction.ButtonClickEvent;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -32,13 +32,11 @@ public class Events extends ListenerAdapter {
     private FlagRaceImageReceivedCommand flagRaceImageRecievedCommand;
 
     @Autowired
-    FlagRaceService flagRaceService;
+    private DismissCommand dismissCommand;
 
     @Autowired
-    ClientService clientService;
+    private RetryCommand retryCommand;
 
-    @Autowired
-    OpenCV openCV;
 
     @Override
     public void onReady(@NotNull ReadyEvent event) {
@@ -46,8 +44,7 @@ public class Events extends ListenerAdapter {
     }
 
     @Override
-    public void onSlashCommand(SlashCommandEvent event)
-    {
+    public void onSlashCommand(SlashCommandEvent event) {
         System.out.println("SLASH");
         switch (event.getName()) {
             case "ping" -> {
@@ -73,7 +70,16 @@ public class Events extends ListenerAdapter {
         }
         else if( attachments.size() == 1 && attachments.get(0).isImage()){
             this.flagRaceImageRecievedCommand.execute(event);
-            return;
+        }
+    }
+
+    @SneakyThrows
+    @Override
+    public void onButtonClick(@NotNull ButtonClickEvent event) {
+        String id = Objects.requireNonNull(Objects.requireNonNull(event.getButton()).getId());
+        switch (id) {
+            case "Retry" -> retryCommand.execute(event);
+            case "DismissAndHumanFallback" -> dismissCommand.execute(event);
         }
     }
 }

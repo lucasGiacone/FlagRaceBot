@@ -12,11 +12,13 @@ public abstract class Embeds {
     int color;
     List<MessageEmbed.Field> fields = new ArrayList<>();
     net.dv8tion.jda.api.entities.User client;
+    String footer;
 
     public Embeds(String title, int color, net.dv8tion.jda.api.entities.User client){
         this.title = title;
         this.color = color;
         this.client = client;
+        this.footer = "Sent to " + client.getName();
     }
 
     public Embeds(String title, int color, net.dv8tion.jda.api.entities.User client, MessageEmbed.Field field){
@@ -24,6 +26,7 @@ public abstract class Embeds {
         this.color = color;
         this.client = client;
         this.fields.add(field);
+        this.footer = "Sent to " + client.getName();
     }
 
     public Embeds(String title, int color, net.dv8tion.jda.api.entities.User client, List<MessageEmbed.Field> fields){
@@ -31,7 +34,13 @@ public abstract class Embeds {
         this.color = color;
         this.client = client;
         this.fields = fields;
+        this.footer = "Sent to " + client.getName();
     }
+
+    public void setFooter(String text){
+        this.footer = text;
+    }
+
 
     public EmbedBuilder embedBuilder(){
         EmbedBuilder embed = new EmbedBuilder();
@@ -41,7 +50,8 @@ public abstract class Embeds {
         for (MessageEmbed.Field field: fields) {
             embed.addField(field);
         }
-        embed.setFooter("Sent to " + client.getName(), client.getAvatarUrl());
+
+        embed.setFooter(footer, client.getAvatarUrl());
         return embed;
     }
 

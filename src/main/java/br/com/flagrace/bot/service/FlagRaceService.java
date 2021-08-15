@@ -19,4 +19,8 @@ public class FlagRaceService {
         return this.flagRaceEventRepository.save(event);
     }
 
+    public void deleteById (Long id){
+        this.flagRaceEventRepository.deleteById(id);
+    }
+
 }
